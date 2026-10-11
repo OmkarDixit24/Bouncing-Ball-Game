@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bouncing Ball Focus Game</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glow-effect {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-full flex flex-col overflow-x-hidden selection:bg-brand-500 selection:text-white">
+
+    <header class="bg-slate-900/80 backdrop-blur border-b border-slate-800 sticky top-0 z-40 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-brand-500/30">
+                <i class="fa-solid fa-bullseye text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">FocusSphere</h1>
+                <p class="text-xs text-slate-400">Ultimate Ball Tracking & Focus Challenge</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="openModal('instructionsModal')" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition border border-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-circle-question"></i>
+                <span class="hidden sm:inline">How to Play</span>
+            </button>
+            <button onclick="openModal('historyModal')" class="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition border border-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span class="hidden sm:inline">History & Stats</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col lg:flex-row p-4 gap-4 max-w-7xl mx-auto w-full items-stretch">
+        
+        <!-- Sidebar Controls & Dashboard -->
+        <section class="w-full lg:w-80 flex flex-col gap-4 bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl backdrop-blur shadow-xl">
+            <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2">Game Settings</h2>
+            
+            <!-- Difficulty Selection -->
+            <div class="space-y-1.5">
+                <label class="text-xs font-medium text-slate-300 flex justify-between">
+                    <span>Difficulty Level</span>
+                    <span id="diffDesc" class="text-brand-400 font-normal">Normal</span>
+                </label>
+                <div class="grid grid-cols-3 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                    <button onclick="setDifficulty('easy')" id="btn-easy" class="py-2 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white">Easy</button>
+                    <button onclick="setDifficulty('normal')" id="btn-normal" class="py-2 text-xs font-medium rounded-lg transition bg-brand-600 text-white shadow-sm">Normal</button>
+                    <button onclick="setDifficulty('intense')" id="btn-intense" class="py-2 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white">Intense</button>
+                </div>
+            </div>
+
+            <!-- Speed Selection -->
+            <div class="space-y-1.5">
+                <label class="text-xs font-medium text-slate-300 flex justify-between">
+                    <span>Ball Velocity</span>
+                    <span id="speedDesc" class="text-brand-400 font-normal">Normal</span>
+                </label>
+                <div class="grid grid-cols-3 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                    <button onclick="setSpeed('slow')" id="btn-slow" class="py-2 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white">Slow</button>
+                    <button onclick="setSpeed('normal')" id="btn-speed-normal" class="py-2 text-xs font-medium rounded-lg transition bg-brand-600 text-white shadow-sm">Normal</button>
+                    <button onclick="setSpeed('fast')" id="btn-fast" class="py-2 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white">Fast</button>
+                </div>
+            </div>
+
+            <!-- Timer Selection (2 min to 20 min) -->
+            <div class="space-y-1.5">
+                <label class="text-xs font-medium text-slate-300 flex justify-between">
+                    <span>Duration (2 - 20 mins)</span>
+                    <span id="timerDesc" class="text-brand-400 font-medium">5 Minutes</span>
+                </label>
+                <div class="grid grid-cols-5 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                    <button onclick="setTimerPreset(2)" id="t-2" class="py-1.5 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white">2m</button>
+                    <button onclick="setTimerPreset(5)" id="t-5" class="py-1.5 text-xs font-medium rounded-lg transition bg-brand-600 text-white shadow-sm">5m</button>
+                    <button onclick="setTimerPreset(10)" id="t-10" class="py-1.5 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white">10m</button>
+                    <button onclick="setTimerPreset(15)" id="t-15" class="py-1.5 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white">15m</button>
+                    <button onclick="setTimerPreset(20)" id="t-20" class="py-1.5 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white">20m</button>
+                </div>
+                <div class="mt-1 flex items-center justify-between text-[11px] text-slate-500">
+                    <span>Custom: <input type="number" id="customMinutes" min="2" max="20" value="5" onchange="setCustomTimer(this.value)" class="w-12 bg-slate-950 text-slate-200 border border-slate-800 rounded px-1 py-0.5 text-center focus:outline-none focus:border-brand-500"> min</span>
+                    <span id="wakeLockStatus" class="text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-bolt"></i> WakeLock Ready</span>
+                </div>
+            </div>
+
+            <!-- Start / Action Button -->
+            <div class="mt-auto pt-4 border-t border-slate-800 flex flex-col gap-2">
+                <button id="startGameBtn" onclick="startGame()" class="w-full py-3 bg-gradient-to-r from-brand-600 to-indigo-500 hover:from-brand-500 hover:to-indigo-400 text-white font-semibold rounded-xl shadow-lg shadow-brand-500/25 transition transform active:scale-95 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-play"></i>
+                    <span>Start Focus Challenge</span>
+                </button>
+                <button id="abortGameBtn" onclick="abortGame()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium rounded-xl transition hidden">
+                    Abort / Reset
+                </button>
+            </div>
+        </section>
+
+        <section class="flex-1 flex flex-col bg-slate-900/60 border border-slate-800/80 rounded-2xl backdrop-blur shadow-xl overflow-hidden relative min-h-[450px]">
+            
+            <!-- Top Status Bar in Game -->
+            <div class="bg-slate-900/90 border-b border-slate-800 px-5 py-3 flex flex-wrap items-center justify-between gap-4 text-xs font-medium text-slate-300">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                        <span class="text-slate-400">Phase:</span>
+                        <span id="phaseIndicator" class="text-emerald-400 font-bold uppercase tracking-wide">Ready</span>
+                    </div>
+                    <div class="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                        <span class="text-slate-400">Time Left:</span>
+                        <span id="timerDisplay" class="text-white font-mono font-bold text-sm">05:00</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                        <span class="text-slate-400">Lag Timer:</span>
+                        <span id="lagDisplay" class="text-amber-400 font-mono font-bold">30s</span>
+                    </div>
+                    <div class="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                        <span class="text-slate-400">Active Balls:</span>
+                        <span id="ballCountDisplay" class="text-brand-400 font-bold">1 / 30</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div id="canvasContainer" class="flex-1 relative w-full h-full bg-slate-950 cursor-crosshair">
+                <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+                
+                <!-- Initial State Overlay Banner -->
+                <div id="overlayBanner" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm p-6 text-center z-20">
+                    <div class="max-w-md space-y-4">
+                        <div class="w-16 h-16 rounded-2xl bg-brand-600/20 border border-brand-500/40 flex items-center justify-center mx-auto text-brand-400 text-2xl shadow-xl shadow-brand-500/10">
+                            <i class="fa-solid fa-eye"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white tracking-tight">Track the Original Ball</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed">
+                            Watch carefully! The game starts with <strong class="text-white">1 target ball</strong>. For the first 30 seconds, it bounces alone. Then, lookalike balls multiply until there are exactly <strong class="text-white">30 balls</strong>. Keep your focus!
+                        </p>
+                        <button onclick="startGame()" class="px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl shadow-lg transition transform hover:scale-105">
+                            Start Tracking Now
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Guess Mode Banner -->
+                <div id="guessBanner" class="absolute top-4 left-1/2 -translate-x-1/2 bg-amber-500/20 border border-amber-500/50 text-amber-300 px-4 py-2 rounded-xl backdrop-blur text-xs font-semibold shadow-lg hidden z-20 animate-pulse">
+                    <i class="fa-solid fa-hand-pointer mr-1"></i> Timer expired! Click/Tap the ball you believe is the ORIGINAL target!
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Instructions Modal -->
+    <div id="instructionsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question text-brand-500"></i> How to Play FocusSphere
+                </h3>
+                <button onclick="closeModal('instructionsModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-3 text-sm text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-2">
+                <p><strong>1. The Objective:</strong> Test and measure your visual tracking focus over extended periods (2 to 20 minutes) without distraction.</p>
+                <p><strong>2. The 30-Second Lag:</strong> When you start, 1 unique ball appears. For exactly 30 seconds, it bounces freely alone. Memorize its starting appearance and path!</p>
+                <p><strong>3. Multiplication:</strong> After 30 seconds, lookalike balls spawn and multiply progressively until exactly 30 balls bounce around.</p>
+                <p><strong>4. The Confusion Challenge:</strong> To prevent color alone from giving away the target, multiple balls share similar color palettes and appearance hues.</p>
+                <p><strong>5. Instant Stop & Reveal:</strong> The exact second your timer expires, motion freezes. You must click on the ball you tracked. The game instantly reveals your picked ball (<span class="text-red-400 font-semibold">Red if wrong</span> / <span class="text-emerald-400 font-semibold">Green if correct</span>) and highlights the true original ball in <span class="text-emerald-400 font-semibold">Green</span>.</p>
+                <p><strong>6. CSV Export:</strong> All game scores and stats are saved locally and can be exported anytime as a CSV report.</p>
+            </div>
+            <div class="pt-3 border-t border-slate-800 flex justify-end">
+                <button onclick="closeModal('instructionsModal')" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl transition">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History & CSV Export Modal -->
+    <div id="historyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-brand-500"></i> Game History & CSV Export
+                </h3>
+                <button onclick="closeModal('historyModal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-400">Past completed focus sessions stored locally:</span>
+                    <button onclick="exportCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-csv"></i> Export as CSV
+                    </button>
+                </div>
+                <div class="border border-slate-800 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Duration</th>
+                                <th class="p-3">Difficulty</th>
+                                <th class="p-3">Speed</th>
+                                <th class="p-3">Result</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="pt-3 border-t border-slate-800 flex justify-between items-center">
+                <button onclick="clearHistory()" class="px-3 py-1.5 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg transition">Clear History</button>
+                <button onclick="closeModal('historyModal')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="resultsModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 text-center space-y-5 shadow-2xl relative">
+            <div id="resultIconContainer" class="w-20 h-20 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-xl">
+                <!-- Dynamic Icon -->
+            </div>
+            <div class="space-y-1">
+                <h3 id="resultTitle" class="text-2xl font-bold text-white tracking-tight">Challenge Complete</h3>
+                <p id="resultSubtitle" class="text-sm text-slate-300">Here is how your focus performance measured up.</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left text-xs">
+                <div>
+                    <span class="text-slate-500 block">Game Result</span>
+                    <span id="resStatus" class="font-bold text-sm text-white">Victory</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block">Duration Selected</span>
+                    <span id="resDuration" class="font-bold text-sm text-white">5 Mins</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block">Difficulty / Speed</span>
+                    <span id="resDiffSpeed" class="font-bold text-slate-300">Normal / Normal</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block">Target Identification</span>
+                    <span id="resAccuracy" class="font-bold text-emerald-400">Correct</span>
+                </div>
+            </div>
+
+            <div class="pt-2 flex gap-3">
+                <button onclick="closeModal('resultsModal'); startGame();" class="flex-1 py-3 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-xl shadow-lg transition">
+                    Play Again
+                </button>
+                <button onclick="closeModal('resultsModal')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-medium rounded-xl transition">
+                    Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Configuration & State
+        let gameState = 'IDLE'; // IDLE, LAG, MULTIPLYING, GUESSING, ENDED
+        let difficulty = 'normal'; // easy, normal, intense
+        let speedSetting = 'normal'; // slow, normal, fast
+        let durationMinutes = 5;
+        
+        let timerTotalSeconds = 300;
+        let timerRemaining = 300;
+        let lagRemaining = 30;
+        let timerInterval = null;
+        let lagInterval = null;
+
+        let balls = [];
+        let originalBallId = null;
+        let pickedBallId = null;
+        let wakeLock = null;
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let animationFrameId = null;
+
+        // Color Palette for Similarity & Confusion
+        // Base color family (e.g. Electric Blue/Indigo with lookalikes)
+        const baseOriginalColor = { r: 99, g: 102, b: 241 }; // #6366f1
+        const lookalikePalettes = [
+            { r: 90, g: 105, b: 235 }, // extremely close
+            { r: 110, g: 95, b: 245 },
+            { r: 80, g: 120, b: 230 },
+            { r: 105, g: 115, b: 220 },
+            { r: 75, g: 90, b: 250 },
+            { r: 120, g: 110, b: 240 }
+        ];
+
+        // Initialize Canvas Size
+        function resizeCanvas() {
+            const container = document.getElementById('canvasContainer');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Wake Lock API Implementation
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    document.getElementById('wakeLockStatus').innerHTML = '<i class="fa-solid fa-bolt"></i> Screen Protected';
+                    wakeLock.addEventListener('release', () => {
+                        document.getElementById('wakeLockStatus').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Lock Released';
+                    });
+                } catch (err) {
+                    console.error(`${err.name}, ${err.message}`);
+                }
+            }
+        }
+
+        async function releaseWakeLock() {
+            if (wakeLock !== null) {
+                try {
+                    await wakeLock.release();
+                    wakeLock = null;
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        }
+
+        // UI Setters
+        function setDifficulty(level) {
+            difficulty = level;
+            ['easy', 'normal', 'intense'].forEach(l => {
+                const btn = document.getElementById(`btn-${l}`);
+                if (l === level) {
+                    btn.className = "py-2 text-xs font-medium rounded-lg transition bg-brand-600 text-white shadow-sm";
+                } else {
+                    btn.className = "py-2 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white";
+                }
+            });
+            document.getElementById('diffDesc').innerText = level.charAt(0).toUpperCase() + level.slice(1);
+        }
+
+        function setSpeed(spd) {
+            speedSetting = spd;
+            ['slow', 'normal', 'fast'].forEach(s => {
+                const btn = document.getElementById(s === 'normal' ? 'btn-speed-normal' : `btn-${s}`);
+                if (s === spd) {
+                    btn.className = "py-2 text-xs font-medium rounded-lg transition bg-brand-600 text-white shadow-sm";
+                } else {
+                    btn.className = "py-2 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white";
+                }
+            });
+            document.getElementById('speedDesc').innerText = spd.charAt(0).toUpperCase() + spd.slice(1);
+        }
+
+        function setTimerPreset(mins) {
+            durationMinutes = mins;
+            document.getElementById('customMinutes').value = mins;
+            [2, 5, 10, 15, 20].forEach(m => {
+                const btn = document.getElementById(`t-${m}`);
+                if (m === mins) {
+                    btn.className = "py-1.5 text-xs font-medium rounded-lg transition bg-brand-600 text-white shadow-sm";
+                } else {
+                    btn.className = "py-1.5 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white";
+                }
+            });
+            document.getElementById('timerDesc').innerText = `${mins} Minute${mins > 1 ? 's' : ''}`;
+        }
+
+        function setCustomTimer(val) {
+            let mins = parseInt(val);
+            if (isNaN(mins) || mins < 2) mins = 2;
+            if (mins > 20) mins = 20;
+            durationMinutes = mins;
+            document.getElementById('customMinutes').value = mins;
+            [2, 5, 10, 15, 20].forEach(m => {
+                document.getElementById(`t-${m}`).className = "py-1.5 text-xs font-medium rounded-lg transition text-slate-400 hover:text-white";
+            });
+            document.getElementById('timerDesc').innerText = `${mins} Minute${mins > 1 ? 's' : ''}`;
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            if (id === 'historyModal') renderHistoryTable();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function startGame() {
+            // Reset timers & state
+            clearInterval(timerInterval);
+            clearInterval(lagInterval);
+            cancelAnimationFrame(animationFrameId);
+
+            timerTotalSeconds = durationMinutes * 60;
+            timerRemaining = timerTotalSeconds;
+            lagRemaining = 30;
+
+            gameState = 'LAG';
+            pickedBallId = null;
+
+            document.getElementById('overlayBanner').classList.add('hidden');
+            document.getElementById('guessBanner').classList.add('hidden');
+            document.getElementById('startGameBtn').classList.add('hidden');
+            document.getElementById('abortGameBtn').classList.remove('hidden');
+            document.getElementById('phaseIndicator').innerText = '30s Lag Phase';
+            document.getElementById('phaseIndicator').className = 'text-amber-400 font-bold uppercase tracking-wide';
+
+            requestWakeLock();
+            initBalls();
+
+            // Start Animation Loop
+            animationLoop();
+
+            // Start Lag Countdown
+            lagInterval = setInterval(() => {
+                lagRemaining--;
+                document.getElementById('lagDisplay').innerText = `${lagRemaining}s`;
+                if (lagRemaining <= 0) {
+                    clearInterval(lagInterval);
+                    startMultiplicationPhase();
+                }
+            }, 1000);
+        }
+
+        function abortGame() {
+            clearInterval(timerInterval);
+            clearInterval(lagInterval);
+            cancelAnimationFrame(animationFrameId);
+            gameState = 'IDLE';
+            releaseWakeLock();
+
+            document.getElementById('overlayBanner').classList.remove('hidden');
+            document.getElementById('guessBanner').classList.add('hidden');
+            document.getElementById('startGameBtn').classList.remove('hidden');
+            document.getElementById('abortGameBtn').classList.add('hidden');
+            document.getElementById('phaseIndicator').innerText = 'Ready';
+            document.getElementById('phaseIndicator').className = 'text-emerald-400 font-bold uppercase tracking-wide';
+            document.getElementById('lagDisplay').innerText = '30s';
+            document.getElementById('timerDisplay').innerText = formatTime(timerTotalSeconds);
+            document.getElementById('ballCountDisplay').innerText = '1 / 30';
+
+            balls = [];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function formatTime(totalSecs) {
+            const m = Math.floor(totalSecs / 60);
+            const s = totalSecs % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function getSpeedMultiplier() {
+            if (speedSetting === 'slow') return 1.5;
+            if (speedSetting === 'normal') return 3.0;
+            return 5.0; // fast
+        }
+
+        function initBalls() {
+            balls = [];
+            const radius = 14;
+            const x = Math.random() * (canvas.width - 100) + 50;
+            const y = Math.random() * (canvas.height - 100) + 50;
+            const spdMult = getSpeedMultiplier();
+            const angle = Math.random() * Math.PI * 2;
+
+            const originalBall = {
+                id: 1,
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * spdMult,
+                vy: Math.sin(angle) * spdMult,
+                radius: radius,
+                color: baseOriginalColor,
+                isOriginal: true
+            };
+            originalBallId = 1;
+            balls.push(originalBall);
+            updateBallCountDisplay();
+        }
+
+        function startMultiplicationPhase() {
+            gameState = 'MULTIPLYING';
+            document.getElementById('phaseIndicator').innerText = 'Multiplication Active';
+            document.getElementById('phaseIndicator').className = 'text-brand-400 font-bold uppercase tracking-wide';
+
+            // Start Main Game Countdown Timer
+            timerInterval = setInterval(() => {
+                timerRemaining--;
+                document.getElementById('timerDisplay').innerText = formatTime(timerRemaining);
+
+                // Multiplication progression curve until 30 balls
+                if (balls.length < 30) {
+                    multiplyBallsStep();
+                }
+
+                // EXACT TIMER EXPIRY CHECK
+                if (timerRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    triggerGuessPhase();
+                }
+            }, 1000);
+        }
+
+        function multiplyBallsStep() {
+            // Spawn lookalike balls progressively up to 30
+            if (balls.length >= 30) return;
+            const spdMult = getSpeedMultiplier();
+
+            // Multiply existing balls by splitting or spawning near center
+            const parent = balls[Math.floor(Math.random() * balls.length)];
+            const angle = Math.random() * Math.PI * 2;
+            const palette = lookalikePalettes[Math.floor(Math.random() * lookalikePalettes.length)];
+
+            const newBall = {
+                id: balls.length + 1,
+                x: parent.x + (Math.random() * 10 - 5),
+                y: parent.y + (Math.random() * 10 - 5),
+                vx: Math.cos(angle) * spdMult * (Math.random() * 0.4 + 0.8),
+                vy: Math.sin(angle) * spdMult * (Math.random() * 0.4 + 0.8),
+                radius: 14,
+                color: palette,
+                isOriginal: false
+            };
+            balls.push(newBall);
+            updateBallCountDisplay();
+        }
+
+        function updateBallCountDisplay() {
+            document.getElementById('ballCountDisplay').innerText = `${balls.length} / 30`;
+        }
+
+        function animationLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update & Draw Balls
+            for (let i = 0; i < balls.length; i++) {
+                let b = balls[i];
+
+                if (gameState !== 'GUESSING' && gameState !== 'ENDED') {
+                    b.x += b.vx;
+                    b.y += b.vy;
+
+                    // Wall bounce
+                    if (b.x - b.radius < 0) { b.x = b.radius; b.vx *= -1; }
+                    if (b.x + b.radius > canvas.width) { b.x = canvas.width - b.radius; b.vx *= -1; }
+                    if (b.y - b.radius < 0) { b.y = b.radius; b.vy *= -1; }
+                    if (b.y + b.radius > canvas.height) { b.y = canvas.height - b.radius; b.vy *= -1; }
+                }
+
+                // Draw Ball
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                
+                let fillColor = `rgb(${b.color.r}, ${b.color.g}, ${b.color.b})`;
+                if (gameState === 'ENDED') {
+                    if (b.isOriginal) {
+                        fillColor = '#10b981'; // Green for true original
+                    } else if (b.id === pickedBallId) {
+                        fillColor = '#ef4444'; // Red for wrong guess
+                    } else {
+                        fillColor = '#334155'; // Muted slate for others
+                    }
+                }
+
+                ctx.fillStyle = fillColor;
+                ctx.shadowColor = fillColor;
+                ctx.shadowBlur = b.isOriginal && gameState === 'LAG' ? 15 : 5;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ffffff22';
+                ctx.stroke();
+                ctx.closePath();
+                ctx.shadowBlur = 0; // reset
+            }
+
+            animationFrameId = requestAnimationFrame(animationLoop);
+        }
+
+        function triggerGuessPhase() {
+            gameState = 'GUESSING';
+            document.getElementById('phaseIndicator').innerText = 'Make Your Guess';
+            document.getElementById('phaseIndicator').className = 'text-amber-400 font-bold uppercase tracking-wide';
+            document.getElementById('guessBanner').classList.remove('hidden');
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (gameState !== 'GUESSING') return;
+
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // Find clicked ball
+            for (let b of balls) {
+                const dist = Math.hypot(b.x - clickX, b.y - clickY);
+                if (dist <= b.radius + 6) {
+                    pickedBallId = b.id;
+                    concludeGame(b.isOriginal);
+                    break;
+                }
+            }
+        });
+
+        function concludeGame(isCorrect) {
+            gameState = 'ENDED';
+            releaseWakeLock();
+            document.getElementById('guessBanner').classList.add('hidden');
+            document.getElementById('abortGameBtn').classList.add('hidden');
+            document.getElementById('phaseIndicator').innerText = 'Challenge Concluded';
+            document.getElementById('phaseIndicator').className = 'text-emerald-400 font-bold uppercase tracking-wide';
+
+            // Save record to LocalStorage History
+            saveGameRecord({
+                date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                duration: `${durationMinutes} min`,
+                difficulty: difficulty,
+                speed: speedSetting,
+                result: isCorrect ? 'Win (Correct)' : 'Loss (Wrong)'
+            });
+
+            // Populate Results Modal
+            const iconContainer = document.getElementById('resultIconContainer');
+            if (isCorrect) {
+                iconContainer.className = "w-20 h-20 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400";
+                iconContainer.innerHTML = '<i class="fa-solid fa-trophy"></i>';
+                document.getElementById('resultTitle').innerText = 'Focus Victory!';
+                document.getElementById('resultSubtitle').innerText = 'Magnificent! You successfully tracked the original target through 30 bouncing balls.';
+                document.getElementById('resStatus').innerText = 'Correct (Won)';
+                document.getElementById('resAccuracy').className = 'font-bold text-emerald-400';
+                document.getElementById('resAccuracy').innerText = 'Accurate Target';
+            } else {
+                iconContainer.className = "w-20 h-20 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-xl bg-rose-500/20 border border-rose-500/40 text-rose-400";
+                iconContainer.innerHTML = '<i class="fa-solid fa-face-frown"></i>';
+                document.getElementById('resultTitle').innerText = 'Focus Lost';
+                document.getElementById('resultSubtitle').innerText = 'Not quite! Your picked ball was incorrect. The true original ball is highlighted in green.';
+                document.getElementById('resStatus').innerText = 'Incorrect (Lost)';
+                document.getElementById('resAccuracy').className = 'font-bold text-rose-400';
+                document.getElementById('resAccuracy').innerText = 'Missed Target';
+            }
+
+            document.getElementById('resDuration').innerText = `${durationMinutes} Mins`;
+            document.getElementById('resDiffSpeed').innerText = `${difficulty.toUpperCase()} / ${speedSetting.toUpperCase()}`;
+
+            openModal('resultsModal');
+        }
+
+        function getGameHistory() {
+            const history = localStorage.getItem('focusSphereHistory');
+            return history ? JSON.parse(history) : [];
+        }
+
+        function saveGameRecord(record) {
+            const history = getGameHistory();
+            history.unshift(record); // Add to top
+            if (history.length > 50) history.pop(); // Cap at 50
+            localStorage.setItem('focusSphereHistory', JSON.stringify(history));
+        }
+
+        function renderHistoryTable() {
+            const tbody = document.getElementById('historyTableBody');
+            const history = getGameHistory();
+            if (history.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No completed focus sessions recorded yet.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = history.map(item => `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="p-3">${item.date}</td>
+                    <td class="p-3 font-medium">${item.duration}</td>
+                    <td class="p-3 capitalize">${item.difficulty}</td>
+                    <td class="p-3 capitalize">${item.speed}</td>
+                    <td class="p-3 font-semibold ${item.result.includes('Win') ? 'text-emerald-400' : 'text-rose-400'}">${item.result}</td>
+                </tr>
+            `).join('');
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('focusSphereHistory');
+            renderHistoryTable();
+        }
+
+        function exportCSV() {
+            const history = getGameHistory();
+            if (history.length === 0) {
+                alert('No history records available to export.');
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,Date,Duration,Difficulty,Speed,Result\n";
+            history.forEach(row => {
+                csvContent += `"${row.date}","${row.duration}","${row.difficulty}","${row.speed}","${row.result}"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `FocusSphere_Scores_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
